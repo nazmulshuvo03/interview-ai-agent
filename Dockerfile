@@ -1,14 +1,10 @@
-# This is an example Dockerfile that builds a minimal container for running LK Agents
 # syntax=docker/dockerfile:1
 ARG PYTHON_VERSION=3.11.6
 FROM python:${PYTHON_VERSION}-slim
 
-# Keeps Python from buffering stdout and stderr to avoid situations where
-# the application crashes without emitting any logs due to buffering.
 ENV PYTHONUNBUFFERED=1
 
-# Create a non-privileged user that the app will run under.
-# See https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#user
+# Create a non-privileged user
 ARG UID=10001
 RUN adduser \
     --disabled-password \
@@ -18,32 +14,32 @@ RUN adduser \
     --uid "${UID}" \
     appuser
 
-
-# Install gcc and other build dependencies.
+# Install build dependencies
 RUN apt-get update && \
     apt-get install -y \
     gcc \
     python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
+# Set workdir and give appuser ownership
+WORKDIR /home/appuser
+COPY . .
+RUN chown -R appuser:appuser /home/appuser
+RUN chmod +r main.py
+
+# Switch to non-root user
 USER appuser
 
+# Setup Python cache
 RUN mkdir -p /home/appuser/.cache
-RUN chown -R appuser /home/appuser/.cache
 
-WORKDIR /home/appuser
-
-COPY requirements.txt .
+# Install Python dependencies
 RUN python -m pip install --user --no-cache-dir -r requirements.txt
 
-COPY . .
-
-# ensure that any dependent models are downloaded at build-time
+# Download necessary models/files
 RUN python main.py download-files
 
-# expose healthcheck port
 EXPOSE 8081
 
-# Run the application.
 CMD ["python", "main.py", "start"]
 
