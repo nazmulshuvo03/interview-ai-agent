@@ -28,8 +28,11 @@ async def entrypoint(ctx: agents.JobContext):
 
     session = AgentSession(
         llm=google.beta.realtime.RealtimeModel(
-            model="gemini-2.0-flash-exp",
-            voice="Puck",
+            # model="gemini-2.0-flash-exp",
+            model="gemini-2.0-flash-live-001",
+            voice="Kore",  # "Puck",
+            temperature=0.3,  # 0.8,
+            instructions=instructions,
         ),
     )
 
@@ -53,9 +56,6 @@ async def entrypoint(ctx: agents.JobContext):
         room=ctx.room,
         agent=agent,
         room_input_options=RoomInputOptions(
-            # LiveKit Cloud enhanced noise cancellation
-            # - If self-hosting, omit this parameter
-            # - For telephony applications, use `BVCTelephony` for best results
             noise_cancellation=noise_cancellation.BVC(),
         ),
     )
